@@ -37,6 +37,7 @@ Config JSON example:
 """
 
 import json
+import math
 import os
 import re
 import subprocess
@@ -218,7 +219,7 @@ def common_indentation(texts):
 
 
 def dedent_by(text, amount):
-    if amount is None:
+    if (amount is None or math.isinf(amount)):
         return dedent(text)
     return "\n".join(
         line[amount:] if len(line) > 0 else line for line in text.split("\n")
