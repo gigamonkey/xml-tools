@@ -18,9 +18,9 @@ standard library plus `lxml`:
 
 ## Layout
 
-- `format_xml.py`, `identify.py` — the two tools (flat top-level modules; entry
-  points are their `main()` functions, wired up in `pyproject.toml`'s
-  `[project.scripts]`).
+- `src/xml_tools/format_xml.py`, `src/xml_tools/identify.py` — the two tools.
+  Entry points are their `main()` functions, wired up in `pyproject.toml`'s
+  `[project.scripts]`.
 - `examples/` — a synthetic config + sample XML, used by the README and as a
   smoke-test fixture. `examples/.xml-formats/xml.json` exercises config
   discovery by extension.
