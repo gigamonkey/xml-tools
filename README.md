@@ -130,3 +130,7 @@ is given.
 ```bash
 xml-identify '//tag' examples/sample.xml
 ```
+
+## License
+
+[MIT](LICENSE)

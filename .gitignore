@@ -2,3 +2,8 @@ __pycache__/
 .venv/
 dist/
 .claude/settings.local.json
+
+# Editor lock/temp files
+.#*
+*~
+\#*\#
