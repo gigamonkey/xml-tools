@@ -12,6 +12,9 @@ dependencies = ["lxml>=6.0.2"]
 Homepage = "https://github.com/gigamonkey/xml-tools"
 Repository = "https://github.com/gigamonkey/xml-tools"
 
+[dependency-groups]
+dev = ["pytest>=8"]
+
 [project.scripts]
 xml-format = "xml_tools.format_xml:main"
 xml-identify = "xml_tools.identify:main"

@@ -24,6 +24,9 @@ standard library plus `lxml`:
 - `examples/` — a synthetic config + sample XML, used by the README and as a
   smoke-test fixture. `examples/.xml-formats/xml.json` exercises config
   discovery by extension.
+- `tests/` — `pytest` suite: `test_format_options.py` covers every formatter
+  config key, `test_config_resolution.py` the config-discovery order and
+  `load_config`, `test_identify.py` the uuid stamper.
 - `plans/done/extend-format-xml.md` — design history of `format_xml`'s feature
   set.
 
@@ -39,4 +42,5 @@ the default.
 ```bash
 uv run xml-format --config-file examples/sample.json examples/sample.xml
 uv run xml-identify '//tag' examples/sample.xml
+uv run pytest                                      # run the test suite
 ```
