@@ -16,13 +16,13 @@ Both depend only on the Python standard library plus
 Install the commands onto your `PATH` with [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv tool install git+https://github.com/<user>/xml-tools
+uv tool install git+https://github.com/gigamonkey/xml-tools
 ```
 
 Or run without a persistent install:
 
 ```bash
-uvx --from git+https://github.com/<user>/xml-tools xml-format file.xml
+uvx --from git+https://github.com/gigamonkey/xml-tools xml-format file.xml
 ```
 
 For local development from a checkout:

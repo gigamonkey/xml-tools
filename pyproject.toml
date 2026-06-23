@@ -8,6 +8,10 @@ license-files = ["LICENSE"]
 requires-python = ">=3.10"
 dependencies = ["lxml>=6.0.2"]
 
+[project.urls]
+Homepage = "https://github.com/gigamonkey/xml-tools"
+Repository = "https://github.com/gigamonkey/xml-tools"
+
 [project.scripts]
 xml-format = "xml_tools.format_xml:main"
 xml-identify = "xml_tools.identify:main"
