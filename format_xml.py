@@ -31,17 +31,22 @@ Config JSON example:
     }
   ],
   "formatters": {
-    "code": ["java", "-jar", "google-java-format.jar", "-a", "-"]
+    "code": ["clang-format", "-"]
   }
 }
+
+The config is selected per input file (see resolve_config_path): an explicit
+--config-file, else {--config-dir}/{ext}.json, else a .xml-formats/{ext}.json
+discovered by walking up from the current working directory, else a built-in
+default that treats every element as a block.
 """
 
 import json
 import math
-import os
 import re
 import subprocess
 from argparse import ArgumentParser
+from pathlib import Path
 from sys import stderr, stdout
 from textwrap import fill, dedent, indent
 
@@ -365,9 +370,8 @@ def render_block(elem, ns, level, cfg):
             content += " "
 
     if wrappable(elem, cfg):
-        oneline = (
-            f"{tag}{re.sub(r'(?s)\\s+', ' ', content).strip()}{close_tag(elem, ns)}"
-        )
+        collapsed = re.sub(r"(?s)\s+", " ", content).strip()
+        oneline = f"{tag}{collapsed}{close_tag(elem, ns)}"
 
         if len(oneline) - 1 <= width:  # -1 for the leading newline.
             return oneline if is_compact(elem, cfg) else f"{oneline}\n"
@@ -491,11 +495,48 @@ def reformat(filename, inplace, cfg):
         f.close()
 
 
+# ── Config discovery ─────────────────────────────────────────────────────────
+
+def discover_config(ext):
+    """Walk up from the current working directory looking for a
+    ``.xml-formats/{ext}.json`` config. Return its path, or None if none is
+    found (or the file has no extension). First hit, nearest the CWD, wins."""
+    if not ext:
+        return None
+    cwd = Path.cwd()
+    for directory in (cwd, *cwd.parents):
+        candidate = directory / ".xml-formats" / f"{ext}.json"
+        if candidate.is_file():
+            return str(candidate)
+    return None
+
+
+def resolve_config_path(filename, args):
+    """Pick the JSON config for ``filename``. Resolution order, highest first:
+
+    1. ``--no-config``           -> None (everything is a block element).
+    2. ``--config-file FILE``    -> exactly FILE, regardless of extension.
+    3. ``--config-dir DIR``      -> ``{DIR}/{ext}.json`` (that directory only).
+    4. default                   -> walk up from the CWD for
+       ``.xml-formats/{ext}.json``.
+    5. nothing found             -> None.
+    """
+    if args.no_config:
+        return None
+    if args.config_file:
+        return args.config_file
+    ext = Path(filename).suffix.lstrip(".")
+    if args.config_dir:
+        candidate = Path(args.config_dir) / f"{ext}.json"
+        return str(candidate) if candidate.is_file() else None
+    return discover_config(ext)
+
+
 # ── CLI ──────────────────────────────────────────────────────────────────────
 
-if __name__ == "__main__":
+def main(argv=None):
     parser = ArgumentParser(
-        prog="format_xml",
+        prog="xml-format",
         description="General-purpose XML formatter with configurable element categories.",
     )
 
@@ -506,7 +547,16 @@ if __name__ == "__main__":
         "-q", "--quiet", action="store_true", help="Suppress progress output"
     )
     parser.add_argument(
-        "-c", "--config", default=None, help="Path to JSON config file"
+        "-c", "--config-file", dest="config_file", default=None,
+        help="Use exactly this JSON config file, regardless of the input's extension"
+    )
+    parser.add_argument(
+        "--config-dir", dest="config_dir", default=None,
+        help="Look up {ext}.json in this directory only (no walking)"
+    )
+    parser.add_argument(
+        "--no-config", action="store_true",
+        help="Skip config discovery; treat every element as a block"
     )
     parser.add_argument(
         "-f", "--format-code", action="store_true",
@@ -514,18 +564,10 @@ if __name__ == "__main__":
     )
     parser.add_argument("files", nargs="*", help="Files to reformat")
 
-    args = parser.parse_args()
-
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    formats_dir = os.path.join(script_dir, ".xml-formats")
+    args = parser.parse_args(argv)
 
     for filename in args.files:
-        if args.config:
-            cfg = load_config(args.config)
-        else:
-            ext = os.path.splitext(filename)[1].lstrip(".")
-            auto_config = os.path.join(formats_dir, f"{ext}.json")
-            cfg = load_config(auto_config if os.path.exists(auto_config) else None)
+        cfg = load_config(resolve_config_path(filename, args))
         cfg["_format_enabled"] = args.format_code
 
         if not args.quiet:
@@ -533,3 +575,7 @@ if __name__ == "__main__":
         reformat(filename, args.inplace, cfg)
         if not args.quiet:
             print("ok.", file=stderr)
+
+
+if __name__ == "__main__":
+    main()

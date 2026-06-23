@@ -104,7 +104,7 @@ Config addition:
 ```json
 {
   "formatters": {
-    "code": ["java", "-jar", "google-java-format.jar", "-a", "-"]
+    "code": ["clang-format", "-"]
   }
 }
 ```
@@ -148,7 +148,7 @@ by compound code elements (item 2) and makes the function match ptx's version.
     }
   ],
   "formatters": {
-    "code": ["java", "-jar", "google-java-format.jar", "-a", "-"]
+    "code": ["clang-format", "-"]
   }
 }
 ```

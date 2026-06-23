@@ -41,16 +41,20 @@ def process_file(filename, xpath, inplace):
             tree.write(stdout.buffer, xml_declaration=True, encoding="utf-8")
 
 
-if __name__ == "__main__":
+def main(argv=None):
     parser = ArgumentParser(
-        prog="identify",
+        prog="xml-identify",
         description="Add uuid attributes to XML elements matching an XPath expression.",
     )
     parser.add_argument("-i", "--inplace", action="store_true", help="Modify files in place")
     parser.add_argument("xpath", help="XPath expression to match elements")
     parser.add_argument("files", nargs="+", help="XML files to process")
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     for filename in args.files:
         process_file(filename, args.xpath, args.inplace)
+
+
+if __name__ == "__main__":
+    main()

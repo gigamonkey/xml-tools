@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<note>
+<title>Example</title>
+<body>
+<p>This is a <b>bold</b> word and a <link>reference</link> in a paragraph long enough to wrap across several lines once it is filled to the configured width.</p>
+<snippet>
+    def greet(name):
+        print(f"Hello, {name}!")
+</snippet>
+</body>
+<tags>
+<tag>alpha</tag>
+<tag>beta</tag>
+<tag>gamma</tag>
+</tags>
+</note>
