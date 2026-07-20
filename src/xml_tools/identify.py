@@ -54,7 +54,7 @@ def main(argv=None):
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument(
         "-r", "--replace", action="store_true",
-        help="Give every match a fresh uuid, replacing any existing one"
+        help="Give every match a fresh uuid, replacing any existing ones"
     )
     mode.add_argument(
         "-s", "--strip", action="store_true",
