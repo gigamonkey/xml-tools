@@ -16,12 +16,17 @@ UUID_RE = re.compile(
 )
 
 
-def process_file(filename, xpath, inplace, replace=False):
+def process_file(filename, xpath, inplace, replace=False, strip=False):
     tree = etree.parse(filename)
     matches = tree.xpath(xpath)
     changed = False
 
     for elem in matches:
+        if strip:
+            if elem.get("uuid") is not None:
+                del elem.attrib["uuid"]
+                changed = True
+            continue
         existing = elem.get("uuid")
         if replace or existing is None:
             elem.set("uuid", str(uuid.uuid4()))
@@ -46,9 +51,14 @@ def main(argv=None):
         description="Add uuid attributes to XML elements matching an XPath expression.",
     )
     parser.add_argument("-i", "--inplace", action="store_true", help="Modify files in place")
-    parser.add_argument(
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
         "-r", "--replace", action="store_true",
         help="Give every match a fresh uuid, replacing any existing one"
+    )
+    mode.add_argument(
+        "-s", "--strip", action="store_true",
+        help="Remove the uuid attribute from every match"
     )
     parser.add_argument("xpath", help="XPath expression to match elements")
     parser.add_argument("files", nargs="+", help="XML files to process")
@@ -56,7 +66,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     for filename in args.files:
-        process_file(filename, args.xpath, args.inplace, args.replace)
+        process_file(filename, args.xpath, args.inplace, args.replace, args.strip)
 
 
 if __name__ == "__main__":

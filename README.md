@@ -119,7 +119,7 @@ to empty.
 ## `xml-identify`
 
 ```bash
-xml-identify [-i] [-r] XPATH FILES...
+xml-identify [-i] [-r | -s] XPATH FILES...
 ```
 
 Adds a `uuid` attribute (a random UUID4) to every element matching `XPATH`
@@ -130,9 +130,13 @@ is given.
 With `-r`/`--replace`, every match gets a fresh `uuid`, overwriting any
 existing value (malformed or not) instead of being left in place.
 
+With `-s`/`--strip`, the `uuid` attribute is removed from every match.
+`-r` and `-s` are mutually exclusive.
+
 ```bash
 xml-identify '//tag' examples/sample.xml       # fill in missing uuids
 xml-identify -i -r '//tag' examples/sample.xml # rotate every uuid in place
+xml-identify -i -s '//tag' examples/sample.xml # strip every uuid in place
 ```
 
 ## License

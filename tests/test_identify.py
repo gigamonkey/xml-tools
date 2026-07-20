@@ -3,6 +3,7 @@
 import io
 import uuid
 
+import pytest
 from lxml import etree
 
 from xml_tools import identify
@@ -81,6 +82,50 @@ def test_replace_overwrites_a_malformed_uuid_without_warning(tmp_path, monkeypat
     assert stamped != "not-a-uuid"
     uuid.UUID(stamped)
     assert "malformed uuid" not in buf.getvalue()  # replaced, so no warning
+
+
+def test_strip_removes_uuid_from_matches_only(tmp_path):
+    existing = "12345678-1234-1234-1234-123456789abc"
+    doc = tmp_path / "doc.xml"
+    doc.write_text(
+        f'<r><q uuid="{existing}">a</q><q>b</q><x uuid="{existing}">c</x></r>'
+    )
+
+    identify.process_file(str(doc), "//q", inplace=True, strip=True)
+
+    root = parse(doc)
+    assert all(q.get("uuid") is None for q in root.findall("q"))  # stripped
+    assert root.find("x").get("uuid") == existing  # non-match untouched
+
+
+def test_strip_leaves_malformed_uuid_untouched_without_warning(tmp_path, monkeypatch):
+    buf = io.StringIO()
+    monkeypatch.setattr(identify, "stderr", buf)
+    doc = tmp_path / "doc.xml"
+    doc.write_text('<r><q uuid="not-a-uuid">a</q></r>')
+
+    identify.process_file(str(doc), "//q", inplace=True, strip=True)
+
+    assert parse(doc).find("q").get("uuid") is None  # removed, not warned about
+    assert "malformed uuid" not in buf.getvalue()
+
+
+def test_main_strip_flag_removes_uuid(tmp_path):
+    existing = "12345678-1234-1234-1234-123456789abc"
+    doc = tmp_path / "doc.xml"
+    doc.write_text(f'<r><item uuid="{existing}">a</item></r>')
+
+    identify.main(["-i", "-s", "//item", str(doc)])
+
+    assert parse(doc).find("item").get("uuid") is None
+
+
+def test_main_replace_and_strip_are_mutually_exclusive(tmp_path):
+    doc = tmp_path / "doc.xml"
+    doc.write_text("<r><item>a</item></r>")
+
+    with pytest.raises(SystemExit):
+        identify.main(["-i", "-r", "-s", "//item", str(doc)])
 
 
 def test_main_entry_point_stamps_in_place(tmp_path):
