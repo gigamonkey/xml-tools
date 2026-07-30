@@ -79,6 +79,26 @@ def test_code_block_with_special_chars_is_wrapped_in_cdata():
     assert "a < b" in out  # unescaped inside CDATA
 
 
+def test_code_element_child_survives_formatting():
+    # A code element whose content comes from an element child (e.g. an
+    # xi:include pulling in a code file) must keep the child, not flatten
+    # the element to its (empty) text content.
+    xml = ('<pre xmlns:xi="http://www.w3.org/2001/XInclude">\n'
+           '  <xi:include parse="text" href="f.java" />\n'
+           '</pre>')
+    cfg = make_cfg(code=["pre"])
+    out = fmt(xml, cfg)
+    assert '<xi:include parse="text" href="f.java" />' in out
+    assert fmt(out, cfg) == out  # and the fallback rendering is idempotent
+
+
+def test_code_comment_child_survives_formatting():
+    out = fmt("<pre>x = 1\n<!-- keep me -->\ny = 2</pre>", make_cfg(code=["pre"]))
+    assert "<!-- keep me -->" in out
+    assert "x = 1" in out
+    assert "y = 2" in out
+
+
 # ── preserve_whitespace ───────────────────────────────────────────────────────
 
 def test_preserve_whitespace_keeps_internal_layout():

@@ -282,7 +282,12 @@ def render_inline(elem, ns, cfg):
 
 def render_verbatim_text(elem, ns, level, cfg, dedentation=None):
     """Render a code/verbatim element: dedent, optionally format, wrap in CDATA
-    if needed."""
+    if needed. An element with children (e.g. an xi:include pulling in the code
+    from a file, or a comment) can't be flattened to text without losing them,
+    so its content is preserved exactly instead."""
+    if len(elem) > 0:
+        return render_with_whitespace(elem, ns, level, cfg)
+
     indent1 = indentation(level, cfg)
     indent2 = indentation(level + 1, cfg)
 
@@ -409,6 +414,10 @@ def render_with_whitespace(elem, ns, level, cfg):
 
 
 def render_child_with_whitespace(elem, ns):
+    if not isinstance(elem.tag, str):  # comment or processing instruction
+        return etree.tostring(elem, encoding="unicode", with_tail=False)
+    if not elem.text and len(elem) == 0:
+        return open_tag(elem, ns, empty=True)
     s = open_tag(elem, ns)
     if elem.text and len(elem.text) > 0:
         s += escape(elem.text)
