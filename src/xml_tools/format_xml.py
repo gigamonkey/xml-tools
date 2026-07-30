@@ -212,7 +212,7 @@ def apply_rules(elem, cfg):
 # ── Dedentation utilities ───────────────────────────────────────────────────
 
 def measure_indentation(line):
-    return float("inf") if line == "" else len(line) - len(dedent(line))
+    return float("inf") if line.strip() == "" else len(line) - len(dedent(line))
 
 
 def dedent_amount(text):
@@ -300,6 +300,10 @@ def render_verbatim_text(elem, ns, level, cfg, dedentation=None):
             cfg,
         ),
     )
+    # Whitespace-only lines become truly empty: their stray spaces don't
+    # survive the dedent/reindent round trip, so leaving them would make
+    # formatting unstable.
+    text = re.sub(r"(?m)^[ \t]+$", "", text)
     needs_cdata = any(e in text for e in "&<>")
 
     content = f"\n{indent1}{open_tag(elem, ns)}\n"
@@ -368,9 +372,28 @@ def render_block(elem, ns, level, cfg):
             content = content.rstrip()
 
     for child in elem:
+        if not is_inline(child, cfg):
+            # Normalize the boundary before a block child, whose rendering
+            # supplies its own leading newline. A lone trailing newline comes
+            # from a preceding block sibling and stays (it makes the blank
+            # separator line); any other trailing whitespace is raw text/tail
+            # whitespace that would otherwise grow on every pass.
+            stripped = content.rstrip()
+            if content.endswith("\n") and stripped.endswith(">"):
+                content = stripped + "\n"
+            else:
+                content = stripped
         content += serialize_element(child, ns | elem.nsmap, level + 1, cfg)
         if child.tail and child.tail.strip():
-            content += escape(child.tail)
+            if is_inline(child, cfg):
+                content += escape(child.tail)
+            else:
+                # Text after a block child starts on a fresh, indented line;
+                # the tail's own leading whitespace would double up with it.
+                if not content.endswith("\n"):
+                    content += "\n"
+                content += indentation(level + 1, cfg)
+                content += escape(child.tail.lstrip())
         elif child.tail and not child.tail.strip() and is_inline(child, cfg):
             content += " "
 

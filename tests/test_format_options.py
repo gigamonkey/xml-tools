@@ -64,6 +64,20 @@ def test_non_inline_child_breaks_onto_its_own_line():
     assert "\n  <em>x</em>" in out
 
 
+def test_block_child_in_mixed_content_is_idempotent():
+    # A non-inline child in the middle of prose: the whitespace at the
+    # text/child boundaries must not accumulate on repeated formatting.
+    cfg = make_cfg()
+    once = fmt("<p>alpha <weird>x</weird> beta\n  gamma <weird>y</weird> delta</p>", cfg)
+    assert fmt(once, cfg) == once
+    assert "\n\n" not in once  # no blank lines inside the prose
+
+
+def test_tail_after_block_child_lands_on_an_indented_line():
+    out = fmt("<p>alpha <weird>x</weird> beta</p>", make_cfg())
+    assert "<weird>x</weird>\n  beta" in out
+
+
 # ── code ──────────────────────────────────────────────────────────────────────
 
 def test_code_block_without_special_chars_has_no_cdata():
@@ -90,6 +104,25 @@ def test_code_element_child_survives_formatting():
     out = fmt(xml, cfg)
     assert '<xi:include parse="text" href="f.java" />' in out
     assert fmt(out, cfg) == out  # and the fallback rendering is idempotent
+
+
+def test_code_whitespace_only_lines_dont_defeat_dedenting():
+    # A line of stray spaces, shallower than the code's real margin, must not
+    # be counted when computing the dedent, and is normalized to a truly
+    # empty line so formatting is stable.
+    cfg = make_cfg(code=["code"])
+    out = fmt("<code>\n    a\n  \n    b\n</code>", cfg)
+    assert "\n  a\n" in out and "\n  b\n" in out  # margin of 4 reduced to indent
+    assert "\n\n" in out                          # junk line now truly empty
+    assert fmt(out, cfg) == out
+
+
+def test_compound_code_whitespace_only_lines_dont_defeat_dedenting():
+    cfg = make_cfg(compound_code={"program": {"code_children": ["code"]}})
+    prog = "<program><code>\n    a\n  \n    b\n</code></program>"
+    once = fmt(prog, cfg)
+    assert "\n    a\n" in once  # code child at indent 4 under program
+    assert fmt(once, cfg) == once
 
 
 def test_code_comment_child_survives_formatting():
